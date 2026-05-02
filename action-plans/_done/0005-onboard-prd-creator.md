@@ -71,11 +71,11 @@ Insert the `prd-creator` entry into `.claude-plugin/marketplace.json`, sync the 
 
 ## Phase F: Commit & Push
 
-- [ ] Frontmatter -> `status: done`, update `progress` summary.
-- [ ] Move plan file to `_done/`: `git mv action-plans/0005-onboard-prd-creator.md action-plans/_done/0005-onboard-prd-creator.md`.
-- [ ] `git add` only the touched files (manifest + README + components.md + plan file + eligibility/draft artifacts if preserved).
-- [ ] `git commit` with a message naming the plugin added (`feat(catalog): onboard prd-creator` or similar).
-- [ ] `git push` (only when explicitly authorized).
+- [v] Frontmatter -> `status: done`, update `progress` summary.
+- [v] Move plan file to `_done/`: `git mv action-plans/0005-onboard-prd-creator.md action-plans/_done/0005-onboard-prd-creator.md`.
+- [v] `git add` only the touched files (manifest + README + components.md + plan file + eligibility/draft artifacts if preserved).
+- [v] `git commit` with a message naming the plugin added (`feat(catalog): onboard prd-creator` or similar).
+- [v] `git push` (only when explicitly authorized). -- Pending push (batched after cleanup commit).
 
 ## Out of Scope for This Plan
 

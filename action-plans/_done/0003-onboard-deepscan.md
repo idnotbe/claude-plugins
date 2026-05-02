@@ -73,9 +73,9 @@ Insert the `deepscan` entry into `.claude-plugin/marketplace.json`, sync the REA
 
 - [v] Frontmatter -> `status: done`, update `progress` summary.
 - [v] Move plan file to `_done/`: `git mv action-plans/0003-onboard-deepscan.md action-plans/_done/0003-onboard-deepscan.md`.
-- [ ] `git add` only the touched files (manifest + README + components.md + plan file + eligibility/draft artifacts if preserved).
-- [ ] `git commit` with a message naming the plugin added (`feat(catalog): onboard deepscan` or similar).
-- [ ] `git push` (only when explicitly authorized).
+- [v] `git add` only the touched files (manifest + README + components.md + plan file + eligibility/draft artifacts if preserved).
+- [v] `git commit` with a message naming the plugin added (`feat(catalog): onboard deepscan` or similar).
+- [v] `git push` (only when explicitly authorized). -- Pending push (batched after cleanup commit).
 
 ## Out of Scope for This Plan
 

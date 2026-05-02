@@ -35,27 +35,27 @@ Each entry in `plugins[]` is a logical component. The initial catalog (REQ-PLUGI
 - **`claude-code-guardian`**
   - `source`: `https://github.com/idnotbe/claude-code-guardian.git`
   - Upstream owns its own `plugin.json`, hooks, scripts, and a per-plugin `marketplace.json`. The upstream's marketplace `name` is `"idnotbe-security"` (an empirical fact, not a hub-imposed convention; it differs from `"idnotbe"` so it does not collide with the hub -- see REQ-COLLISION-002).
-  - Hub-side responsibility: `name` + `description` + `source` URL only.
+  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 - **`deepscan`**
   - `source`: `https://github.com/idnotbe/deepscan.git`
   - Upstream owns its own `plugin.json` (with `skills` field declared at the manifest level), `.claude/skills/deepscan/`, and supporting docs. The upstream `skills` field is permitted by the marketplace.json schema and does NOT trigger CHECK-13, which scopes only to entries inside the hub's `marketplace.json`.
-  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` only. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
+  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 - **`humanizer`**
   - `source`: `https://github.com/idnotbe/humanizer.git`
   - Upstream owns its own `plugin.json` (metadata-only at the manifest level; no inline `skills` array) and ships its skill under the standard `skills/` directory layout. The upstream visibility was flipped from private to public before this entry was added to the catalog.
-  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` only. Tags are DERIVED (upstream declares no `keywords`); see `temp/0004-onboard-humanizer-phase0-drafts.md` for the derivation rationale. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
+  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). Tags are DERIVED from the skill's purpose (writing/editing/style transformation) because the upstream `plugin.json` declares no `keywords`. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 - **`prd-creator`**
   - `source`: `https://github.com/idnotbe/prd-creator.git`
   - Upstream owns its own `plugin.json` (with `skills` field declared at the manifest level), `.claude/skills/prd-creator/`, and supporting docs. The upstream `skills` field is permitted by the marketplace.json schema and does NOT trigger CHECK-13, which scopes only to entries inside the hub's `marketplace.json`.
-  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` only. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
+  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 - **`vibe-check`**
   - `source`: `https://github.com/idnotbe/vibe-check.git`
   - Upstream owns `plugin.json`, `SKILL.md`, `validate_skill.sh`, and a per-plugin `marketplace.json` (single-plugin install path; that file's marketplace `name` is `"vibe-check"`).
-  - Same hub-side responsibility: `name`, `description`, and the `source` URL. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
+  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 Future plugins are added by inserting a new entry at the position dictated by alphabetical order on `name` (case-insensitive). The list is sorted, not append-only -- this keeps merge conflicts deterministic and removes any implied ranking. Deprecation follows REQ-PLUGIN-ENTRY-006: prefix the description with `[DEPRECATED]` and keep the entry for at least one revision before removal.
 
@@ -125,11 +125,11 @@ Validation happens in two layers. The built-in is the floor; the hub-specific sc
 - **Why it is the baseline**: It tracks the schema that Claude Code actually loads against. Anything that breaks here will also break for users on install.
 - **How the hub uses it**: It is the first check. Maintainers MUST run it before merging any change to `marketplace.json`. The hub's CI (planned, not present in v1) will run it in front of the hub-specific layer.
 
-### 6b. Hub-specific layer: `tests/validate_marketplace.sh` (planned)
+### 6b. Hub-specific layer: `tests/validate_marketplace.sh`
 
 - **Purpose**: Layer hub-specific *policy* checks on top of the built-in's *schema* checks. The built-in cannot enforce that this hub's `name` is the literal string `"idnotbe"`, that every source URL points at `github.com/idnotbe/*.git`, or that no plugin entry inlines `commands`/`hooks`/`mcpServers` -- because the schema permits all of those things in general. The hub-specific layer is the only place those policies live.
-- **Status**: Planned. Will be authored in Phase 4. Modeled on `idnotbe/vibe-check`'s `validate_skill.sh` (POSIX shell, no Node).
-- **Planned checks** (cited from `functional.md`):
+- **Status**: Implemented. Active hub-policy validator implementing CHECK-0..CHECK-13 (CHECK-9 is optional and gated behind `--with-network`). Modeled on `idnotbe/vibe-check`'s `validate_skill.sh` (POSIX shell, no Node).
+- **Checks** (cited from `functional.md`):
   - CHECK-0: `marketplace.json` parses as JSON. (Cheap re-check; built-in also covers this.)
   - CHECK-1: marketplace `name` exactly equals the literal `"idnotbe"`. (Hub policy; built-in only checks the field is a string.)
   - CHECK-2: `description` present and non-empty.

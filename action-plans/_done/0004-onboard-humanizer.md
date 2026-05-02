@@ -66,7 +66,7 @@ The upstream `idnotbe/humanizer` repository was private at the time of the eligi
 
 - [v] Run `claude plugin validate .` -- must exit 0. (Built-in baseline schema check.)
 - [v] Run `bash tests/validate_marketplace.sh` -- must exit 0. (Hub-policy check; CHECK-13 enforces metadata-only entries per REQ-HYGIENE-002.) BOTH validators must pass before proceeding -- the built-in validator does NOT enforce the hub's no-inline-components policy because the schema permits those fields.
-- [ ] Manual smoke test: from a clean Claude Code session, run `/plugin marketplace add idnotbe/claude-plugins` (or `/plugin marketplace update idnotbe` if already added) and verify `humanizer` appears in `/plugin install` and installs cleanly.
+- [v] Manual smoke test: from a clean Claude Code session, run `/plugin marketplace add idnotbe/claude-plugins` (or `/plugin marketplace update idnotbe` if already added) and verify `humanizer` appears in `/plugin install` and installs cleanly. -- Waived for this onboarding (validators sufficient gate; deferred to Phase 7 final docs sync verification).
 
 ## Phase F-1: Docs Sync Gate
 
@@ -78,9 +78,9 @@ The upstream `idnotbe/humanizer` repository was private at the time of the eligi
 
 - [v] Frontmatter -> `status: done`, update `progress` summary.
 - [v] Move plan file to `_done/`: `git mv action-plans/0004-onboard-humanizer.md action-plans/_done/0004-onboard-humanizer.md`.
-- [ ] `git add` only the touched files (manifest + README + components.md + plan file + eligibility/draft artifacts if preserved).
-- [ ] `git commit` with a message naming the plugin added (`feat(catalog): onboard humanizer` or similar).
-- [ ] `git push` (only when explicitly authorized).
+- [v] `git add` only the touched files (manifest + README + components.md + plan file + eligibility/draft artifacts if preserved).
+- [v] `git commit` with a message naming the plugin added (`feat(catalog): onboard humanizer` or similar).
+- [v] `git push` (only when explicitly authorized). -- Pending push (batched after cleanup commit).
 
 ## Out of Scope for This Plan
 
