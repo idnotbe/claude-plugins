@@ -41,6 +41,17 @@
       "homepage": "https://github.com/idnotbe/humanizer"
     },
     {
+      "name": "prd-creator",
+      "description": "Creates Product Requirements Documents (PRD) through interactive conversation. Guides users through Epic/Feature/Story structure with progressive disclosure.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/idnotbe/prd-creator.git"
+      },
+      "category": "planning",
+      "tags": ["prd", "product-requirements", "planning", "documentation", "user-stories"],
+      "homepage": "https://github.com/idnotbe/prd-creator"
+    },
+    {
       "name": "vibe-check",
       "description": "Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating.",
       "source": {
