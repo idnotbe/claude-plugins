@@ -11,6 +11,7 @@ Thumbs.db
 # Local-only files
 *.local
 .mcp.json
+.claude/
 
 # Working memory for action plans (Phase 0 alignment docs, eligibility surveys,
 # validator dry-run output, etc.). Not committed by default.
