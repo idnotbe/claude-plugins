@@ -37,6 +37,11 @@ Each entry in `plugins[]` is a logical component. The initial catalog (REQ-PLUGI
   - Upstream owns its own `plugin.json`, hooks, scripts, and a per-plugin `marketplace.json`. The upstream's marketplace `name` is `"idnotbe-security"` (an empirical fact, not a hub-imposed convention; it differs from `"idnotbe"` so it does not collide with the hub -- see REQ-COLLISION-002).
   - Hub-side responsibility: `name` + `description` + `source` URL only.
 
+- **`deepscan`**
+  - `source`: `https://github.com/idnotbe/deepscan.git`
+  - Upstream owns its own `plugin.json` (with `skills` field declared at the manifest level), `.claude/skills/deepscan/`, and supporting docs. The upstream `skills` field is permitted by the marketplace.json schema and does NOT trigger CHECK-13, which scopes only to entries inside the hub's `marketplace.json`.
+  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` only. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
+
 - **`vibe-check`**
   - `source`: `https://github.com/idnotbe/vibe-check.git`
   - Upstream owns `plugin.json`, `SKILL.md`, `validate_skill.sh`, and a per-plugin `marketplace.json` (single-plugin install path; that file's marketplace `name` is `"vibe-check"`).

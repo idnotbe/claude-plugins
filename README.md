@@ -47,6 +47,7 @@ Sorted alphabetically by name. Descriptions match each upstream `plugin.json`'s
 | Plugin | Description | Upstream |
 |--------|-------------|----------|
 | `claude-code-guardian` | Hook-based security guardrails for Claude Code's `--dangerously-skip-permissions` mode. Blocks destructive commands, protects secrets, and auto-commits safety checkpoints. | [idnotbe/claude-code-guardian](https://github.com/idnotbe/claude-code-guardian) |
+| `deepscan` | Deep multi-file analysis plugin for complex tasks where standard context windows fail. Orchestrates parallel sub-agents for security, architecture, and performance analysis. | [idnotbe/deepscan](https://github.com/idnotbe/deepscan) |
 | `vibe-check` | Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating. | [idnotbe/vibe-check](https://github.com/idnotbe/vibe-check) |
 
 ## Alternative: single-plugin install

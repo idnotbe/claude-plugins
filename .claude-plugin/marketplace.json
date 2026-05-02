@@ -19,6 +19,17 @@
       "homepage": "https://github.com/idnotbe/claude-code-guardian"
     },
     {
+      "name": "deepscan",
+      "description": "Deep multi-file analysis plugin for complex tasks where standard context windows fail. Orchestrates parallel sub-agents for security, architecture, and performance analysis.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/idnotbe/deepscan.git"
+      },
+      "category": "analysis",
+      "tags": ["analysis", "security-audit", "architecture", "multi-file", "deep-scan"],
+      "homepage": "https://github.com/idnotbe/deepscan"
+    },
+    {
       "name": "vibe-check",
       "description": "Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating.",
       "source": {
