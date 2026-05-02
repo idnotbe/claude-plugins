@@ -14,7 +14,7 @@ The hub is hub-and-spoke. The hub repository (`idnotbe/claude-plugins`) holds th
 
 - **End users of `idnotbe` plugins**: install once, get the whole catalog.
 - **The plugin author (`idnotbe`)**: maintains the catalog by adding entries to one manifest file rather than communicating per-plugin install instructions.
-- **Each upstream plugin repository**: continues to own its own `plugin.json` and (optionally) its own `marketplace.json` for the single-plugin install path. The hub does not modify or replace those files.
+- **Each upstream plugin repository**: continues to own its own `plugin.json`. The hub does not modify or replace those files.
 
 ## Scope
 
@@ -32,14 +32,13 @@ The hub is hub-and-spoke. The hub repository (`idnotbe/claude-plugins`) holds th
 - Any plugin source code, skills, hooks, commands, agents, or assets. The hub holds metadata only.
 - Hosting or proxying the upstream plugin repositories. Each plugin remains independently installable from its own repo.
 - Sha-pinning plugin sources in v1. The manifest tracks each upstream's default branch by using the bare `url` form. Sha-pinning is a known future option (see `architecture/decisions.md` ADR-002).
-- Removing the per-plugin `marketplace.json` files from upstream repositories. Both install paths are supported deliberately.
 - A CI/CD pipeline at hub launch. Validator runs locally; CI is a documented follow-up.
 
 ## Success Criteria
 
 1. A user can run `/plugin marketplace add idnotbe/claude-plugins` and see all listed plugins in their `/plugin install` catalog under the `@idnotbe` namespace.
 2. Adding a new plugin to the catalog is a single edit (one new entry in the `plugins` array) plus a commit.
-3. The hub never collides with the per-plugin `marketplace.json` install path: a user who already added `idnotbe/vibe-check` directly is not blocked from also adding the hub, modulo the documented marketplace-name collision constraint (REQ-COLLISION-001 in `functional.md`).
+3. The hub uniquely owns the `"idnotbe"` marketplace name: no other `idnotbe`-owned source publishes under that name (REQ-COLLISION-001 in `functional.md`).
 4. Both the built-in `claude plugin validate .` and the hub-specific `tests/validate_marketplace.sh` pass on every change to `marketplace.json`.
 
 ## Document Map

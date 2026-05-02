@@ -71,7 +71,7 @@ ADR cites the REQ IDs it supports.
 
 ## Key decisions
 
-Six ADRs lock in the architecture. Each is one paragraph in
+Seven ADRs lock in the architecture. Each is one paragraph in
 [`docs/architecture/decisions.md`](docs/architecture/decisions.md); the gist:
 
 - **[ADR-001](docs/architecture/decisions.md#adr-001-marketplace-name-field-is-idnotbe-not-idnotbe-plugins)**
@@ -88,7 +88,7 @@ Six ADRs lock in the architecture. Each is one paragraph in
 - **[ADR-004](docs/architecture/decisions.md#adr-004-dual-install-paths----both-hub-and-per-plugin-marketplacejson-remain-valid)**
   -- Both install paths coexist: hub (`<plugin>@idnotbe`) is recommended;
   per-plugin (`<plugin>@<plugin-marketplace>`) remains supported. No upstream
-  repo is required to delete its own `marketplace.json`.
+  repo is required to delete its own `marketplace.json`. (Superseded by ADR-007.)
 - **[ADR-005](docs/architecture/decisions.md#adr-005-catalog-scope-at-v1----vibe-check-and-claude-code-guardian-only)**
   -- v1 catalog is exactly `vibe-check` and `claude-code-guardian`. Other
   candidate repos under `/home/idnotbe/projects/*` are out of scope until they
@@ -96,6 +96,10 @@ Six ADRs lock in the architecture. Each is one paragraph in
 - **[ADR-006](docs/architecture/decisions.md#adr-006-two-layer-validation----claude-plugin-validate--baseline--hub-specific-shell-layer)**
   -- Two-layer validation: built-in `claude plugin validate .` baseline +
   custom `tests/validate_marketplace.sh` for hub-only policy.
+- **[ADR-007](docs/architecture/decisions.md#adr-007-hub-is-the-single-install-path----supersedes-adr-004-dual-install-paths)**
+  -- Hub is the single install path -- supersedes ADR-004 (dual install paths).
+  Per-plugin `marketplace.json` files are removed; the hub at `idnotbe/claude-plugins`
+  becomes the sole documented install path for any `idnotbe`-owned plugin.
 
 ## Source resolution model
 

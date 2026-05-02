@@ -55,7 +55,9 @@ Lightweight Architecture Decision Records for the `idnotbe/claude-plugins` marke
 
 ## ADR-004: Dual install paths -- both hub and per-plugin `marketplace.json` remain valid
 
-- **Status**: Accepted (2026-05-02)
+> Superseded by: ADR-007 (2026-05-03).
+
+- **Status**: Superseded by ADR-007 (2026-05-03)
 - **Context**: Before the hub existed, each plugin under `idnotbe` shipped its own `.claude-plugin/marketplace.json` so that users could install it via `/plugin marketplace add idnotbe/<plugin>`. The hub creates a second install path: `/plugin marketplace add idnotbe/claude-plugins` followed by `/plugin install <plugin>@idnotbe`. The question is whether to keep both, deprecate one, or unify on the hub.
 - **Decision**: Keep both. The hub is the recommended path going forward (and the README documents it as such), but the per-plugin path is preserved for users who installed via that path before the hub existed and for users who want to opt into a single plugin without taking the whole catalog.
 - **Consequences**:
@@ -101,3 +103,32 @@ Lightweight Architecture Decision Records for the `idnotbe/claude-plugins` marke
   - **Custom validator only**: rejected -- ignores the platform's built-in baseline, would need to re-implement schema validation, would drift from the schema over time.
   - **Built-in only**: rejected -- cannot enforce the hub-specific stricter policies (literal name, URL pattern, no inline components).
 - **Linked**: REQ-MANIFEST-001 (literal name), REQ-MANIFEST-006 ($schema), REQ-PLUGIN-ENTRY-002 (URL form), REQ-HYGIENE-002 (no inline components).
+
+---
+
+## ADR-007: Hub is the single install path -- supersedes ADR-004 (dual install paths)
+
+- **Status**: Accepted (2026-05-03). Supersedes ADR-004.
+- **Context**: ADR-004 (2026-05-02) decided to keep BOTH the hub install path (`/plugin marketplace add idnotbe/claude-plugins` + `/plugin install <plugin>@idnotbe`) AND the per-plugin install path (`/plugin marketplace add idnotbe/<plugin>` + `/plugin install <plugin>@<upstream-marketplace-name>`). At the time, the hub catalog had only two entries (`vibe-check`, `claude-code-guardian`) and had not been validated end-to-end. The "keep both" decision was framed as a zero-breakage migration: existing per-plugin marketplace users would not be forced to switch.
+
+  The previous text of REQ-INSTALL-FLOW-002 (the requirement that codified the dual-path coexistence) is preserved here verbatim as the historical record:
+
+  > **REQ-INSTALL-FLOW-002 -- Single-plugin install path coexists**
+  > Each upstream plugin repository (`idnotbe/vibe-check`, `idnotbe/claude-code-guardian`) currently ships its own `.claude-plugin/marketplace.json`. The hub MUST NOT require those files to be removed; both install paths -- `/plugin marketplace add idnotbe/<plugin>` and `/plugin marketplace add idnotbe/claude-plugins` -- MUST continue to work.
+  > - Rationale: Existing users who installed via the per-plugin path must not be broken. See ADR-004.
+  > - Verified by: `tests/test_scenarios.md` (manual, planned).
+
+  Since ADR-004 was accepted, all five plugins (`claude-code-guardian`, `deepscan`, `humanizer`, `prd-creator`, `vibe-check`) have been onboarded and verified through the hub. With the hub catalog complete and demonstrably working, ADR-004's "keep both" rationale no longer pays for itself: every plugin is now reachable via the hub, and keeping the per-plugin path alive imposes a recurring drift cost (two manifests per plugin describing the same plugin, with no automated cross-check) plus a documentation cost (every install instruction has to hedge between the two paths). ADR-004's "manual cross-repo discipline" trade-off is exactly the cost we are now paying to no payoff.
+- **Decision**: The hub at `idnotbe/claude-plugins` is the SINGLE documented install path for any `idnotbe`-owned plugin. Each upstream plugin repository's `.claude-plugin/marketplace.json` is REMOVED. The two upstreams that previously shipped one (`idnotbe/claude-code-guardian` with marketplace `name: "idnotbe-security"`, and `idnotbe/vibe-check` with marketplace `name: "vibe-check"`) drop the file as part of plan 0006. Future `idnotbe`-owned plugin repositories MUST NOT introduce a `.claude-plugin/marketplace.json`; they ship `plugin.json` only and join the catalog by being added to the hub manifest. ADR-004 is superseded.
+- **Consequences**:
+  - Positive: Single source of truth for the catalog. One manifest per plugin (the hub entry) instead of two; no manual cross-repo `name`/`description` sync work.
+  - Positive: Documentation simplifies. README, install scripts, blog posts, and onboarding plans all converge on a single install pattern (`/plugin marketplace add idnotbe/claude-plugins` then `/plugin install <plugin>@idnotbe`).
+  - Positive: The collision-risk surface shrinks. Only ONE marketplace under the `idnotbe` brand can ever be registered (REQ-COLLISION-001), and there are no per-plugin marketplaces to track separately.
+  - Negative: Existing users who installed a plugin via `/plugin marketplace add idnotbe/<plugin>` will see their next `/plugin marketplace update <name>` fail once the upstream `marketplace.json` is gone. Mitigation: the hub README's new "Migration notes" section documents the migration command sequence per affected upstream marketplace name (`idnotbe-security`, `vibe-check`).
+  - Negative: We cannot retroactively update third-party content (blog posts, social-media posts, search-engine-cached pages) that still reference the legacy `/plugin marketplace add idnotbe/<plugin>` paths. Users following stale instructions will hit a "no manifest" error at the upstream repo (the repo itself remains reachable; only `.claude-plugin/marketplace.json` is removed). That is at least a clearer signal than a network 404 would be.
+  - Negative: The hub's two-layer validator does NOT structurally prevent a future `idnotbe`-owned repository from re-introducing a `.claude-plugin/marketplace.json` (such a check would require upstream-fetch capability, which the validator does not have today). The forbid-rule is a process commitment plus the rewritten REQ-COLLISION-002 forward-only forbidance, not a code gate. A maintainer-run periodic sweep is tracked as a follow-on plan.
+- **Alternatives considered**:
+  - **Keep ADR-004 ("dual paths") in place**: rejected. The catalog is now complete; the recurring drift and documentation cost no longer buy anything.
+  - **Mark per-plugin `marketplace.json` files DEPRECATED but keep them in place for one revision before removal**: considered, rejected for v1. The deprecation-prefix mechanism (REQ-PLUGIN-ENTRY-006) applies to hub catalog entries, not to upstream marketplace manifests; there is no analogous in-product surface in an upstream `marketplace.json` that would communicate "this path is deprecated" to a user mid-install. A README "Migration notes" section is a better signal: it lives where someone migrating actually looks (the hub).
+  - **Add a hub-side validator CHECK that, given a list of catalog plugins, asserts none of the upstream repos has a `.claude-plugin/marketplace.json`**: deferred. Requires an offline-acceptable maintainer-run periodic sweep plus upstream-fetch capability that the v1 validator does not have. Tracked as a follow-on plan.
+- **Linked**: REQ-INSTALL-FLOW-002 (rewritten to single-path-only by this plan), REQ-INSTALL-FLOW-003 (rewritten to hub-only README recommendation), REQ-COLLISION-002 (rewritten to forward-only forbidance), ADR-004 (superseded), ADR-001 (established the `"idnotbe"` name reservation this decision extends).

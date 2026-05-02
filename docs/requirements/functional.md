@@ -98,15 +98,15 @@ A user who runs `/plugin marketplace add idnotbe/claude-plugins` MUST be able to
 - Rationale: This is the entire reason the hub exists.
 - Verified by: `tests/test_scenarios.md` (manual, planned).
 
-**REQ-INSTALL-FLOW-002 -- Single-plugin install path coexists**
-Each upstream plugin repository (`idnotbe/vibe-check`, `idnotbe/claude-code-guardian`) currently ships its own `.claude-plugin/marketplace.json`. The hub MUST NOT require those files to be removed; both install paths -- `/plugin marketplace add idnotbe/<plugin>` and `/plugin marketplace add idnotbe/claude-plugins` -- MUST continue to work.
-- Rationale: Existing users who installed via the per-plugin path must not be broken. See ADR-004.
-- Verified by: `tests/test_scenarios.md` (manual, planned).
+**REQ-INSTALL-FLOW-002 -- Hub is the only install path**
+The hub at `idnotbe/claude-plugins` is the single documented install path for any `idnotbe`-owned plugin. Upstream plugin repositories MUST NOT ship a `.claude-plugin/marketplace.json`. Users install any plugin via `/plugin marketplace add idnotbe/claude-plugins` followed by `/plugin install <name>@idnotbe`.
+- Rationale: A single install path eliminates manual cross-repo manifest sync (the cost recorded in ADR-004's "Negative" consequences) and removes the documentation hedge between two paths. See ADR-007, which supersedes ADR-004. The previous dual-path body is preserved in ADR-007's Context section as the historical record.
+- Verified by: `tests/test_scenarios.md` Scenario 2 (negative test: the legacy single-plugin path is gone).
 
-**REQ-INSTALL-FLOW-003 -- Hub is the recommended path going forward**
-The hub README MUST document the hub install path as the recommended entry point, while explicitly preserving the single-plugin path as a still-supported alternative.
-- Rationale: Without an explicit recommendation, users will not know which path to choose; ambiguity makes documentation harder to maintain.
-- Verified by: `README.md` "Install" section.
+**REQ-INSTALL-FLOW-003 -- Hub install is the canonical README entry point**
+The hub README MUST document the hub install path as the canonical (and only) entry point: `/plugin marketplace add idnotbe/claude-plugins` followed by `/plugin install <name>@idnotbe`. The README MUST NOT describe a per-plugin install path as a still-supported alternative; it MAY include a "Migration notes" section pointing legacy users at the hub path.
+- Rationale: Documentation tracks the policy: post-ADR-007, there is no per-plugin alternative to recommend. Listing one would contradict the supersede.
+- Verified by: `README.md` "Install (recommended path)" section + `README.md` "Migration notes" section.
 
 ---
 
@@ -119,10 +119,10 @@ Because the hub's marketplace `name` is `"idnotbe"` (REQ-MANIFEST-001), any othe
 - Rationale: Ownership of the `"idnotbe"` marketplace name is reserved for the hub. Per-plugin upstream `marketplace.json` files (e.g. `idnotbe/vibe-check`, `idnotbe/claude-code-guardian`) currently use distinct names (see REQ-COLLISION-002 for the actual policy and observed values), so they do not collide with the hub.
 - Verified by: Convention; checked at PR review time. `tests/validate_marketplace.sh:CHECK-1` enforces the `"idnotbe"` name on this hub; the converse (no other marketplace claims it) is a process commitment.
 
-**REQ-COLLISION-002 -- Per-plugin marketplaces MUST NOT use `"idnotbe"`**
-Upstream plugin repositories that ship a `marketplace.json` for the single-plugin install path MUST NOT set `name: "idnotbe"`. Any other distinct value is acceptable. Using the plugin name itself (e.g. `"vibe-check"`) is RECOMMENDED for human clarity but is not required by this hub. As of v1, the existing upstreams use: `idnotbe/vibe-check` -> `name: "vibe-check"`, `idnotbe/claude-code-guardian` -> `name: "idnotbe-security"`. Both differ from `"idnotbe"`, so neither collides with the hub.
-- Rationale: The only hard constraint is collision avoidance with the hub's reserved `"idnotbe"` name. Beyond that, the upstream owner is free to choose a marketplace name; the hub does not dictate naming convention to other repos.
-- Verified by: Manual review of each upstream repo's `marketplace.json`; documented in this hub's README "Plugin author guide" section. The hub-side validator cannot inspect upstream repos' marketplace `name` values, so this is enforced socially, not structurally.
+**REQ-COLLISION-002 -- Future upstream `marketplace.json` files MUST NOT use `"idnotbe"`**
+Per ADR-007, no `idnotbe`-owned upstream plugin repository ships a `.claude-plugin/marketplace.json` today. Any future upstream `marketplace.json` (whether re-introduced or added by a new policy) MUST NOT set `name: "idnotbe"`. The `"idnotbe"` marketplace name is reserved by REQ-COLLISION-001 for the hub at `idnotbe/claude-plugins` only.
+- Rationale: The collision-avoidance constraint outlives the dual-path policy. Even though no per-plugin marketplaces exist post-ADR-007, the hub still owns the `"idnotbe"` marketplace name, and any future addition under that brand would collide. The requirement keeps a stable anchor for the collision-table row in `docs/architecture/components.md` Section 4 and for ADR-001's "Linked" reference.
+- Verified by: Process check at PR review time; structural validation is impossible without upstream-fetch capability (out of scope for the v1 validator). A maintainer-run periodic sweep is tracked as a follow-on plan.
 
 ---
 
@@ -160,7 +160,7 @@ The marketplace.json root MAY carry a `version` field. The schema permits it, an
 |--------------------|--------------------------------------------------------|---------|
 | REQ-MANIFEST-*     | Marketplace identity (name, owner, plugins, $schema)   | 1       |
 | REQ-PLUGIN-ENTRY-* | Per-plugin entry shape, source form, uniqueness        | 2       |
-| REQ-INSTALL-FLOW-* | User install paths, dual-path coexistence              | 3       |
+| REQ-INSTALL-FLOW-* | User install paths (hub-only per ADR-007)              | 3       |
 | REQ-COLLISION-*    | Marketplace-name collision constraints                 | 4       |
 | REQ-HYGIENE-*      | JSON validity, hub policy on inline components, English| 5       |
 | REQ-VERSION-*      | Hub-level versioning policy                            | 6       |

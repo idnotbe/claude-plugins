@@ -5,7 +5,7 @@ Scenarios that the automated `tests/validate_marketplace.sh` cannot exercise. Th
 Run these before any release of the hub manifest, and any time `marketplace.json` changes a `name`, an entry's `name`, or a `source.url`.
 
 Conventions used below:
-- "Clean session" means `~/.claude/plugins/known_marketplaces.json` has no `idnotbe`, `vibe-check`, or `idnotbe-security` entries — back up and remove before starting.
+- "Clean session" means `~/.claude/plugins/known_marketplaces.json` has no `idnotbe` entry (or any fixture-introduced `idnotbe` collision-test entry) — back up and remove before starting.
 - "Expected" lines describe the observable Claude Code behavior or filesystem state at that step.
 - "Verifies" cites the REQ-* IDs (see `docs/requirements/functional.md`) that the scenario covers.
 
@@ -42,42 +42,35 @@ Conventions used below:
 
 ---
 
-## 2. Single-plugin install path coexistence
+## 2. Standalone marketplace path is removed (negative)
+
+This is a negative test that demonstrates the supersede recorded in ADR-007 (2026-05-03): the legacy single-plugin install path no longer resolves to a marketplace manifest at either upstream.
 
 **Setup**
 - Clean session.
-- Internet access.
+- Internet access; GitHub reachable.
 
 **Steps**
 1. Run `/plugin marketplace add idnotbe/vibe-check`.
-2. Run `/plugin marketplace list`.
-3. Run `/plugin marketplace add idnotbe/claude-plugins`.
-4. Run `/plugin marketplace list`.
-5. Run `/plugin install vibe-check@vibe-check` (the per-plugin marketplace name, not the hub).
-6. Run `/plugin marketplace add idnotbe/claude-code-guardian`.
-7. Run `/plugin install claude-code-guardian@idnotbe-security`.
+2. Run `/plugin marketplace add idnotbe/claude-code-guardian`.
+3. Inspect `~/.claude/plugins/known_marketplaces.json`.
 
 **Expected (specific success signals)**
-- After step 1: `jq -e '.marketplaces | has("vibe-check")' ~/.claude/plugins/known_marketplaces.json` returns 0 (key `vibe-check`, NOT `idnotbe`).
-- After step 2: `/plugin marketplace list` stdout contains the exact substring `vibe-check`; it does NOT contain the substring `idnotbe`.
-- After step 3: `jq -e '.marketplaces | has("idnotbe")' ~/.claude/plugins/known_marketplaces.json` returns 0.
-- After step 4: `/plugin marketplace list` stdout contains BOTH the exact substring `vibe-check` AND the exact substring `idnotbe`.
-- After step 5: shell exit code is 0; `~/.claude/plugins/vibe-check/` directory exists; if the CLI logs the resolving marketplace, the log line for this install references `vibe-check` (NOT `idnotbe`).
-- After step 6: `jq -e '.marketplaces | has("idnotbe-security")' ~/.claude/plugins/known_marketplaces.json` returns 0; key `idnotbe-security`, NOT `claude-code-guardian`.
-- After step 7: shell exit code is 0; `~/.claude/plugins/claude-code-guardian/` directory exists.
-- End state: `jq '.marketplaces | keys' ~/.claude/plugins/known_marketplaces.json` includes all three of `vibe-check`, `idnotbe`, `idnotbe-security`.
+- Step 1: shell exit code is non-zero AND/OR Claude Code reports a missing-manifest error (the upstream repo `idnotbe/vibe-check` no longer ships `.claude-plugin/marketplace.json`). The exact wording of the error is CLI-version dependent; the load-bearing assertion is that the marketplace IS NOT registered. Verify with `jq -e '.marketplaces | has("vibe-check") | not' ~/.claude/plugins/known_marketplaces.json` -- expected exit 0.
+- Step 2: same shape as step 1 against `idnotbe/claude-code-guardian` (upstream marketplace name `idnotbe-security`). Verify with `jq -e '.marketplaces | has("idnotbe-security") | not' ~/.claude/plugins/known_marketplaces.json` -- expected exit 0.
+- Step 3: neither `vibe-check` nor `idnotbe-security` appears as a marketplace key. The user's only path forward is the hub: `/plugin marketplace add idnotbe/claude-plugins` (covered by Scenario 1).
 
-**Verifies**: REQ-INSTALL-FLOW-002, REQ-COLLISION-001, REQ-COLLISION-002.
+**Verifies**: REQ-INSTALL-FLOW-002 (rewritten by hub plan 0006: hub is the only install path).
 
 ---
 
-## 3. Marketplace name collision
+## 3. Marketplace name collision (hub-only, fixture-only)
 
-This is a negative test that demonstrates the constraint protected by REQ-COLLISION-001.
+This is a negative test that demonstrates the constraint protected by REQ-COLLISION-001 using two local fixtures that both declare `name: "idnotbe"`. Per ADR-007, no `idnotbe`-owned upstream marketplace exists, so the test does not exercise any live per-plugin marketplaces.
 
 **Setup**
 - Clean session.
-- Two local fixture manifests (or two different repos) that both declare `name: "idnotbe"` at the marketplace root.
+- Two local fixture manifests (or two different local repos) that both declare `name: "idnotbe"` at the marketplace root.
 
 **Steps**
 1. Inspect `~/.claude/plugins/known_marketplaces.json` (`jq 'keys' ~/.claude/plugins/known_marketplaces.json`).
@@ -87,16 +80,14 @@ This is a negative test that demonstrates the constraint protected by REQ-COLLIS
 5. Re-run `jq '.marketplaces | keys[] | select(. == "idnotbe")' ~/.claude/plugins/known_marketplaces.json | wc -l`.
 6. Run `/plugin marketplace remove idnotbe`.
 7. Re-run `jq -e '.marketplaces | has("idnotbe") | not' ~/.claude/plugins/known_marketplaces.json`.
-8. As the affirmative half of the test, register the hub plus both per-plugin marketplaces (REQ-COLLISION-002 v1 examples) — `idnotbe`, `vibe-check`, `idnotbe-security`.
 
 **Expected (specific success signals)**
 - Step 1: the file's top-level structure is an object whose keys are marketplace names (not repo URLs).
 - Step 3: jq returns a non-null object pointing at fixture A's source.
 - Step 5: the `wc -l` output is exactly `1` — there is only ever one `"idnotbe"` slot. The second `add` either silently overwrote the first registration or failed with non-zero exit; either is acceptable, but two slots is NOT.
 - Step 7: jq exits 0, confirming the single `idnotbe` slot was removed by a single `remove` call.
-- After step 8: `jq -r '.marketplaces | keys | sort | join(",")' ~/.claude/plugins/known_marketplaces.json` outputs exactly `idnotbe,idnotbe-security,vibe-check` (or a superset that contains all three).
 
-**Verifies**: REQ-COLLISION-001, REQ-COLLISION-002.
+**Verifies**: REQ-COLLISION-001.
 
 ---
 
@@ -174,8 +165,8 @@ This is a negative test that demonstrates the constraint protected by REQ-COLLIS
 | Scenario                                | Primary REQ-*               |
 |-----------------------------------------|-----------------------------|
 | 1. Hub install path                     | REQ-INSTALL-FLOW-001        |
-| 2. Single-plugin coexistence            | REQ-INSTALL-FLOW-002        |
-| 3. Name collision                       | REQ-COLLISION-001/002       |
+| 2. Standalone path removed (negative)   | REQ-INSTALL-FLOW-002        |
+| 3. Hub `name` collision (fixture-only)  | REQ-COLLISION-001           |
 | 4. Update / re-pull (bare-URL)          | REQ-PLUGIN-ENTRY-002, ADR-002 |
 | 5. Deprecation flow                     | REQ-PLUGIN-ENTRY-006        |
 | 6. Hub-not-a-plugin                     | REQ-MANIFEST-005            |

@@ -26,7 +26,7 @@ Every box MUST be checked before adding a plugin to the catalog. If any box fail
 - [ ] Plugin lives at `github.com/idnotbe/<repo>` (REQ-PLUGIN-ENTRY-002 -- only `idnotbe`-owned URLs).
 - [ ] Upstream repo has a working `.claude-plugin/plugin.json` (the v1 hub does not require an upstream `marketplace.json`, but it does require `plugin.json` so Claude Code can resolve metadata).
 - [ ] Plugin has a non-empty `description` (used as the user-facing install description).
-- [ ] If the upstream ships a `marketplace.json`, it MUST NOT use `name: "idnotbe"` (REQ-COLLISION-002).
+- [ ] Upstream MUST NOT ship a `.claude-plugin/marketplace.json` (per ADR-007). If the candidate's upstream currently ships one, the onboarding plan must include a removal step before Phase 1 (manifest-add); otherwise re-introducing a per-plugin marketplace would contradict ADR-007.
 - [ ] Plugin name does not collide with an existing entry in `.claude-plugin/marketplace.json` (REQ-PLUGIN-ENTRY-003).
 - [ ] Plugin name equals the upstream `plugin.json.name` exactly (REQ-PLUGIN-ENTRY-004).
 - [ ] Plugin is not abandoned or archived (last commit within ~12 months, or maintainer confirms ongoing maintenance).

@@ -39,6 +39,32 @@ The first command registers this hub repo as a marketplace under the local name
 catalog and pull each plugin from its upstream repo. Restart your Claude Code
 session if the new plugins do not appear immediately.
 
+## Migration notes
+
+If you previously installed `vibe-check` or `claude-code-guardian` via the legacy
+per-plugin marketplace path (`/plugin marketplace add idnotbe/vibe-check` or
+`/plugin marketplace add idnotbe/claude-code-guardian`), the upstream
+`.claude-plugin/marketplace.json` files have been removed in favor of the hub.
+Use the command sequence below to switch your local registration to the hub
+install path. The two upstreams previously registered under different
+marketplace `name` aliases (`vibe-check` and `idnotbe-security`); the
+`/plugin marketplace remove` command takes the alias, not the `owner/repo`
+form.
+
+```
+# Existing standalone install via claude-code-guardian:
+/plugin marketplace remove idnotbe-security
+/plugin marketplace add idnotbe/claude-plugins
+/plugin install claude-code-guardian@idnotbe
+```
+
+```
+# Existing standalone install via vibe-check:
+/plugin marketplace remove vibe-check
+/plugin marketplace add idnotbe/claude-plugins
+/plugin install vibe-check@idnotbe
+```
+
 ## Catalog
 
 Sorted alphabetically by name. Descriptions match each upstream `plugin.json`'s
@@ -51,29 +77,6 @@ Sorted alphabetically by name. Descriptions match each upstream `plugin.json`'s
 | `humanizer` | This skill transforms English text to sound naturally human and less stereotypically AI-written | [idnotbe/humanizer](https://github.com/idnotbe/humanizer) |
 | `prd-creator` | Creates Product Requirements Documents (PRD) through interactive conversation. Guides users through Epic/Feature/Story structure with progressive disclosure. | [idnotbe/prd-creator](https://github.com/idnotbe/prd-creator) |
 | `vibe-check` | Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating. | [idnotbe/vibe-check](https://github.com/idnotbe/vibe-check) |
-
-## Alternative: single-plugin install
-
-Each upstream plugin repo also ships its own `marketplace.json`, so the
-pre-existing single-plugin install path still works:
-
-```
-/plugin marketplace add idnotbe/vibe-check
-/plugin install vibe-check@vibe-check
-```
-
-```
-/plugin marketplace add idnotbe/claude-code-guardian
-/plugin install claude-code-guardian@idnotbe-security
-```
-
-Note the trailing namespace differs: the upstream marketplaces use the names
-`vibe-check` and `idnotbe-security` (NOT `idnotbe`), so they do not collide with
-this hub. You can safely have both the hub and a per-plugin marketplace
-registered at the same time -- the same plugin will appear under two distinct
-`@<marketplace>` namespaces in your local catalog. The hub path is recommended
-going forward; the per-plugin path is preserved for users who installed via that
-path before the hub existed.
 
 ## What this repo IS / IS NOT
 
@@ -95,10 +98,9 @@ path before the hub existed.
 The full per-plugin onboarding workflow lives in
 [`action-plans/0002-onboard-additional-plugins.md`](action-plans/0002-onboard-additional-plugins.md).
 That plan covers the inclusion criteria (idnotbe-owned upstream, working
-`plugin.json`, unique name, no `name: "idnotbe"` collision in the upstream
-marketplace) and the per-addition workflow (insert at the alphabetically correct
-position, update README + `docs/architecture/components.md`, run both
-validators).
+`plugin.json`, unique name) and the per-addition workflow (insert at the
+alphabetically correct position, update README + `docs/architecture/components.md`,
+run both validators).
 
 One execution of that plan = one plugin added.
 

@@ -34,7 +34,7 @@ Each entry in `plugins[]` is a logical component. The initial catalog (REQ-PLUGI
 
 - **`claude-code-guardian`**
   - `source`: `https://github.com/idnotbe/claude-code-guardian.git`
-  - Upstream owns its own `plugin.json`, hooks, scripts, and a per-plugin `marketplace.json`. The upstream's marketplace `name` is `"idnotbe-security"` (an empirical fact, not a hub-imposed convention; it differs from `"idnotbe"` so it does not collide with the hub -- see REQ-COLLISION-002).
+  - Upstream owns its own `plugin.json`, hooks, and scripts.
   - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 - **`deepscan`**
@@ -54,7 +54,7 @@ Each entry in `plugins[]` is a logical component. The initial catalog (REQ-PLUGI
 
 - **`vibe-check`**
   - `source`: `https://github.com/idnotbe/vibe-check.git`
-  - Upstream owns `plugin.json`, `SKILL.md`, `validate_skill.sh`, and a per-plugin `marketplace.json` (single-plugin install path; that file's marketplace `name` is `"vibe-check"`).
+  - Upstream owns `plugin.json`, `SKILL.md`, and `validate_skill.sh`.
   - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 Future plugins are added by inserting a new entry at the position dictated by alphabetical order on `name` (case-insensitive). The list is sorted, not append-only -- this keeps merge conflicts deterministic and removes any implied ranking. Deprecation follows REQ-PLUGIN-ENTRY-006: prefix the description with `[DEPRECATED]` and keep the entry for at least one revision before removal.
@@ -86,31 +86,11 @@ The user's local Claude Code stores added marketplaces in `~/.claude/plugins/kno
 | Source                                                | Marketplace `name`     | Collides with hub?                |
 |-------------------------------------------------------|------------------------|-----------------------------------|
 | `idnotbe/claude-plugins` (this hub)                   | `"idnotbe"`            | --                                |
-| `idnotbe/vibe-check` (per-plugin)                     | `"vibe-check"`         | No (different name)               |
-| `idnotbe/claude-code-guardian` (per-plugin)           | `"idnotbe-security"`   | No (different name)               |
 | Hypothetical other marketplace using `name: "idnotbe"`| `"idnotbe"`            | YES -- forbidden by REQ-COLLISION-001 |
 
-Note: the `claude-code-guardian` upstream uses `"idnotbe-security"` (not `"claude-code-guardian"`) as its marketplace name. This is an empirical observation, not a hub-imposed rule. REQ-COLLISION-002's only requirement is "MUST NOT be `"idnotbe"`"; using the plugin name is RECOMMENDED for clarity but not required. Both observed upstreams satisfy the no-collision constraint.
+Per ADR-007, no `idnotbe`-owned upstream plugin repository ships a `.claude-plugin/marketplace.json`. The two upstreams that previously did (`idnotbe/vibe-check` with `name: "vibe-check"` and `idnotbe/claude-code-guardian` with `name: "idnotbe-security"`) had their standalone manifests removed in plan 0006 (see ADR-007). Future `idnotbe`-owned `marketplace.json` files MUST NOT use `name: "idnotbe"` (REQ-COLLISION-002, forward-only).
 
 The "no other marketplace under `idnotbe`" rule is a process commitment enforced at PR review of any new `idnotbe`-owned marketplace; it cannot be enforced by a validator inside this repo (the conflicting marketplace would be in a different repo).
-
----
-
-## 5. Dual install paths -- a deliberate architecture choice
-
-Two install paths coexist for any plugin `<P>` owned by `idnotbe`:
-
-1. **Hub path (recommended)**:
-   `/plugin marketplace add idnotbe/claude-plugins`
-   `/plugin install <P>@idnotbe`
-
-2. **Single-plugin path (still supported)**:
-   `/plugin marketplace add idnotbe/<P>`
-   `/plugin install <P>@<upstream-marketplace-name>` -- where `<upstream-marketplace-name>` is whatever the upstream's `.claude-plugin/marketplace.json` declares as its `name`. It is NOT necessarily `<P>`. Per REQ-COLLISION-002, the only constraint is "MUST NOT be `idnotbe`"; using the plugin name itself is RECOMMENDED but not required. Concrete v1 examples:
-   - `vibe-check`: `/plugin marketplace add idnotbe/vibe-check` then `/plugin install vibe-check@vibe-check` (upstream marketplace `name` is `"vibe-check"`).
-   - `claude-code-guardian`: `/plugin marketplace add idnotbe/claude-code-guardian` then `/plugin install claude-code-guardian@idnotbe-security` (upstream marketplace `name` is `"idnotbe-security"`).
-
-Both are real and intentional. The hub does not require upstream repos to delete their per-plugin `marketplace.json`. The trade-off is that the same plugin can show up in a user's catalog under two different `@<marketplace>` namespaces if they added both paths -- this is documented in the README, not enforced by code. See ADR-004.
 
 ---
 
@@ -150,6 +130,6 @@ Validation happens in two layers. The built-in is the floor; the hub-specific sc
 
 ## 7. README.md and docs/ -- documentation surfaces
 
-- **README.md** -- end-user surface. Documents the hub install path, lists the catalog, and notes the single-plugin path as a still-supported alternative (REQ-INSTALL-FLOW-003).
+- **README.md** -- end-user surface. Documents the hub install path as the canonical entry point and lists the catalog (REQ-INSTALL-FLOW-003).
 - **docs/requirements/** and **docs/architecture/** -- contributor surface. The files you are reading now.
 - **Change risk**: LOW. Adding a new plugin requires inserting one entry at the correct alphabetical position in `marketplace.json` and inserting a matching catalog row at the same alphabetical position in `README.md` (REQ-PLUGIN-ENTRY-005). The rest of the documentation is structural and stable.

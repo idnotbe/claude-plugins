@@ -9,7 +9,7 @@
 The architecture is hub-and-spoke:
 
 - **Hub (this repo)**: `github.com/idnotbe/claude-plugins` -- holds `.claude-plugin/marketplace.json` only.
-- **Spokes (per-plugin repos)**: `github.com/idnotbe/vibe-check`, `github.com/idnotbe/claude-code-guardian`, and any future `idnotbe`-owned plugin repos. Each spoke owns its own `.claude-plugin/plugin.json` and (optionally) its own `.claude-plugin/marketplace.json` for the single-plugin install path.
+- **Spokes (per-plugin repos)**: `github.com/idnotbe/vibe-check`, `github.com/idnotbe/claude-code-guardian`, and any future `idnotbe`-owned plugin repos. Each spoke owns its own `.claude-plugin/plugin.json`.
 
 The hub does not vendor, mirror, fork, or modify any spoke. It only references them by URL. When a user runs `/plugin install vibe-check@idnotbe`, Claude Code reads the hub's manifest, finds the `vibe-check` entry, resolves `source.url` to `https://github.com/idnotbe/vibe-check.git`, clones that repo, and loads the upstream `plugin.json` as the source of truth for the actual install.
 
@@ -17,8 +17,8 @@ The hub does not vendor, mirror, fork, or modify any spoke. It only references t
 
 A monorepo (one repository containing all plugins as subdirectories, like Anthropic's `claude-plugins-official`) was considered and rejected for v1. The reasons:
 
-1. The two existing plugins (`vibe-check`, `claude-code-guardian`) already exist as independent repositories with their own commit histories, issues, and per-plugin `marketplace.json`. Folding them into a monorepo would either lose that history or require git-subtree merges that complicate ongoing maintenance.
-2. Plugin authors who want to install a single plugin via `/plugin marketplace add idnotbe/<plugin>` depend on the per-plugin repo continuing to exist. A monorepo would force that path to become `git-subdir`-resolution, which is heavier than the current bare-`url` form.
+1. The existing plugins already exist as independent repositories with their own commit histories and issues. (Each previously also shipped its own per-plugin `marketplace.json`; those have since been removed per ADR-007.) Folding them into a monorepo would either lose that history or require git-subtree merges that complicate ongoing maintenance.
+2. The hub install path resolves each entry via the bare-`url` source form against an upstream spoke repo (ADR-007). A monorepo would force that path to become `git-subdir`-resolution, which is heavier than the current bare-`url` form.
 3. The hub-and-spoke model lets each plugin evolve at its own cadence. A breaking change in one plugin's `plugin.json` schema affects only that spoke, not the hub manifest.
 
 The trade-off accepted in exchange: the hub manifest must be updated (one new entry) whenever a new plugin is published. This is a single-line edit and a commit.
