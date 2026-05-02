@@ -1,0 +1,20 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local-only files
+*.local
+.mcp.json
+
+# Working memory for action plans (Phase 0 alignment docs, eligibility surveys,
+# validator dry-run output, etc.). Not committed by default.
+temp/
+
+# Windows reserved filename artifact
+nul

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "idnotbe",
+  "description": "idnotbe's Claude Code plugin marketplace -- a single registry that lists every plugin published under the idnotbe brand.",
+  "owner": {
+    "name": "idnotbe",
+    "url": "https://github.com/idnotbe"
+  },
+  "plugins": [
+    {
+      "name": "claude-code-guardian",
+      "description": "Hook-based security guardrails for Claude Code's --dangerously-skip-permissions mode. Blocks destructive commands, protects secrets, and auto-commits safety checkpoints.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/idnotbe/claude-code-guardian.git"
+      },
+      "category": "security",
+      "tags": ["security", "guardrails", "hooks"],
+      "homepage": "https://github.com/idnotbe/claude-code-guardian"
+    },
+    {
+      "name": "vibe-check",
+      "description": "Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/idnotbe/vibe-check.git"
+      },
+      "category": "agent-tools",
+      "tags": ["metacognition", "sanity-check", "agent-safety"],
+      "homepage": "https://github.com/idnotbe/vibe-check"
+    }
+  ]
+}
