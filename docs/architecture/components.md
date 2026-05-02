@@ -42,6 +42,11 @@ Each entry in `plugins[]` is a logical component. The initial catalog (REQ-PLUGI
   - Upstream owns its own `plugin.json` (with `skills` field declared at the manifest level), `.claude/skills/deepscan/`, and supporting docs. The upstream `skills` field is permitted by the marketplace.json schema and does NOT trigger CHECK-13, which scopes only to entries inside the hub's `marketplace.json`.
   - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` only. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
+- **`humanizer`**
+  - `source`: `https://github.com/idnotbe/humanizer.git`
+  - Upstream owns its own `plugin.json` (metadata-only at the manifest level; no inline `skills` array) and ships its skill under the standard `skills/` directory layout. The upstream visibility was flipped from private to public before this entry was added to the catalog.
+  - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` only. Tags are DERIVED (upstream declares no `keywords`); see `temp/0004-onboard-humanizer-phase0-drafts.md` for the derivation rationale. No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
+
 - **`vibe-check`**
   - `source`: `https://github.com/idnotbe/vibe-check.git`
   - Upstream owns `plugin.json`, `SKILL.md`, `validate_skill.sh`, and a per-plugin `marketplace.json` (single-plugin install path; that file's marketplace `name` is `"vibe-check"`).

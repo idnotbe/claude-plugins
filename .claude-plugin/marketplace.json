@@ -30,6 +30,17 @@
       "homepage": "https://github.com/idnotbe/deepscan"
     },
     {
+      "name": "humanizer",
+      "description": "This skill transforms English text to sound naturally human and less stereotypically AI-written",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/idnotbe/humanizer.git"
+      },
+      "category": "writing",
+      "tags": ["writing", "humanization", "style", "ai-text"],
+      "homepage": "https://github.com/idnotbe/humanizer"
+    },
+    {
       "name": "vibe-check",
       "description": "Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating.",
       "source": {
