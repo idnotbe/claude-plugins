@@ -27,12 +27,20 @@ Run these commands inside Claude Code:
 /plugin install <plugin>@idnotbe
 ```
 
-Concrete examples for the current catalog:
+For the three standardized skill plugins, the equivalent terminal commands are:
 
+```sh
+claude plugin marketplace add idnotbe/claude-plugins
+claude plugin install deep-inquiry@idnotbe
+claude plugin install skill-quality-builder@idnotbe
+claude plugin install vibe-check@idnotbe
 ```
-/plugin install vibe-check@idnotbe
-/plugin install claude-code-guardian@idnotbe
-```
+
+Invoke plugin skills as `/deep-inquiry:deep-inquiry`,
+`/skill-quality-builder:skill-quality-builder`, or `/vibe-check:vibe-check`.
+The commands work with compatible Claude Code installations on Windows and
+Linux. A local CLI install does not install into a remote Claude account or
+workspace; use that surface's available administrator/plugin controls.
 
 The first command registers this hub repo as a marketplace under the local name
 `idnotbe`. The subsequent `install` commands resolve `<plugin>` against the hub
@@ -67,16 +75,42 @@ form.
 
 ## Catalog
 
-Sorted alphabetically by name. Descriptions match each upstream `plugin.json`'s
-`description` field verbatim.
+Sorted alphabetically by name. Descriptions match the registered upstream plugin descriptions.
 
 | Plugin | Description | Upstream |
 |--------|-------------|----------|
 | `claude-code-guardian` | Hook-based security guardrails for Claude Code's `--dangerously-skip-permissions` mode. Blocks destructive commands, protects secrets, and auto-commits safety checkpoints. | [idnotbe/claude-code-guardian](https://github.com/idnotbe/claude-code-guardian) |
+| `deep-inquiry` | Investigate problems beyond familiar answers while preserving the user objective. | [idnotbe/deep-inquiry](https://github.com/idnotbe/deep-inquiry) |
 | `deepscan` | Deep multi-file analysis plugin for complex tasks where standard context windows fail. Orchestrates parallel sub-agents for security, architecture, and performance analysis. | [idnotbe/deepscan](https://github.com/idnotbe/deepscan) |
 | `humanizer` | This skill transforms English text to sound naturally human and less stereotypically AI-written | [idnotbe/humanizer](https://github.com/idnotbe/humanizer) |
 | `prd-creator` | Creates Product Requirements Documents (PRD) through interactive conversation. Guides users through Epic/Feature/Story structure with progressive disclosure. | [idnotbe/prd-creator](https://github.com/idnotbe/prd-creator) |
-| `vibe-check` | Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating. | [idnotbe/vibe-check](https://github.com/idnotbe/vibe-check) |
+| `skill-quality-builder` | Create, improve, and audit reusable Agent Skills with explicit validation and evaluation. | [idnotbe/skill-quality-builder](https://github.com/idnotbe/skill-quality-builder) |
+| `vibe-check` | Assess whether the next action should proceed, be adjusted, or stop. | [idnotbe/vibe-check](https://github.com/idnotbe/vibe-check) |
+
+## Standalone skills and OpenAI plugins
+
+The three standardized skill repositories each retain one canonical bundle at
+`.agents/skills/<name>/`. Both host manifests reference it without copying or
+symlinking the skill. Their standalone installation also supports both hosts:
+
+```sh
+npx skills@latest add idnotbe/deep-inquiry --skill deep-inquiry --agent codex claude-code --copy
+npx skills@latest add idnotbe/skill-quality-builder --skill skill-quality-builder --agent codex claude-code --copy
+npx skills@latest add idnotbe/vibe-check --skill vibe-check --agent codex claude-code --copy
+```
+
+Use Node.js LTS (CI uses 24), npm and Git. Add `--global` for user scope or select
+only one agent. Windows PowerShell can use `npx.cmd` when `npx.ps1` is blocked;
+do not weaken execution policy. Prefer one installation mode per host/scope to
+avoid duplicates. Each source repository's INSTALL.md explains prerequisites,
+manual import, updates and rollback.
+
+For ChatGPT/Codex plugins, use the separate
+[OpenAI catalog](https://github.com/idnotbe/chatgpt-plugins). It has a distinct
+marketplace name and does not collide with this hub. Both catalogs preserve the
+bare-URL/default-branch policy: they are not reproducible commit pins. Record the
+actual source revision and installation evidence; review source changes before
+merging releases and bump both source manifest versions together.
 
 ## What this repo IS / IS NOT
 
@@ -100,9 +134,7 @@ The full per-plugin onboarding workflow lives in
 That plan covers the inclusion criteria (idnotbe-owned upstream, working
 `plugin.json`, unique name) and the per-addition workflow (insert at the
 alphabetically correct position, update README + `docs/architecture/components.md`,
-run both validators).
-
-One execution of that plan = one plugin added.
+run both validators). Plan 0007 additionally records the cross-host skill rollout.
 
 ## Plugin lifecycle / deprecation
 
@@ -119,47 +151,56 @@ pointing at the new name, in addition to adding the new-name entry.
 
 ## Validation
 
-Validation has two layers (per ADR-006 in
-[`docs/architecture/decisions.md`](docs/architecture/decisions.md)):
+The existing two layers remain required: `claude plugin validate .` for the
+first-party schema and `bash tests/validate_marketplace.sh` for hub policy
+(ADR-006). The latter still enforces the exact identity, bare idnotbe URLs,
+unique/alphabetically ordered entries and absence of inline executable fields.
+No existing policy check is removed or weakened.
 
-1. **Built-in baseline** -- Claude Code's `claude plugin validate .` (also
-   exposed as the `/plugin validate .` slash command). Validates JSON
-   well-formedness and schema conformance against the marketplace schema. This
-   is the floor that any change to `marketplace.json` must clear before merging.
-2. **Hub-specific layer** -- `tests/validate_marketplace.sh` (Phase 4 of
-   [`action-plans/0001-bootstrap-hub-repo.md`](action-plans/0001-bootstrap-hub-repo.md)).
-   Layers on policy checks the built-in cannot enforce because they are stricter
-   than the schema: literal `name == "idnotbe"`, every source URL matches
-   `^https://github\.com/idnotbe/[^/]+\.git$`, no plugin entry inlines
-   executable component fields (`commands`, `hooks`, `mcpServers`, `lspServers`,
-   `agents`, `skills`, `setup`, `strict`), `$schema` is the documented URL,
-   alphabetical ordering of `plugins[]` by `name`.
+New cross-platform tests complement these checks:
 
-Both must exit 0 before any change to the manifest is committed.
+```sh
+python -B -m unittest discover -s tests -p test_catalog.py -v
+python -B tools/check_catalog.py
+python -B tools/check_catalog.py --smoke --report temp/catalog-report.json
+```
+
+Python 3.10+ is required for maintenance checks, not catalog runtime. The explicit
+`--smoke` mode needs Git, Node/npm, current Claude Code and network access. Native
+Windows/Linux CI installs all three skills directly from GitHub for both agent
+directories, compares every file against a recorded source checkout, confirms
+that the three repos use identical distribution tooling, validates this hub with
+Claude's strict validator and installs its three external Git plugins. The
+existing shell policy validator also runs on Linux. Other catalog plugins are
+preserved, not installed or modified by this evaluation.
+
+Inspect the actual exact-commit CI results and JSON artifact. Configuration is
+not a passing test. GUI/workspace import, natural triggering and model behavior
+remain `not_run`; installation success is not evidence of improved model quality.
+The OpenAI sibling uses the same checker for development-only Codex native
+plugin read/install verification, not as a production client API recipe.
 
 ## Repo structure
 
 ```
 claude-plugins/
-  .claude-plugin/
-    marketplace.json         # The single behavior-bearing artifact
-  docs/
-    requirements/            # REQ-* requirements (mission, contract, hygiene)
-    architecture/            # Architecture overview, components, ADRs
-  action-plans/              # Execution plans (lifecycle: not-started/active/done)
-    _done/                   # Completed plans
-    _ref/                    # Reference / historical documents
-  tests/                     # validate_marketplace.sh + manual scenarios (Phase 4)
-  README.md                  # This file
-  ARCHITECTURE.md            # Top-level architecture narrative
-  CLAUDE.md                  # Claude Code project instructions
-  LICENSE                    # MIT License
-  .gitignore                 # Git ignore rules
+  .claude-plugin/marketplace.json  # The single behavior-bearing artifact
+  .github/workflows/catalog.yml   # Native Windows/Linux installation checks
+  tools/check_catalog.py          # Explicit maintenance-only checks
+  tests/                         # Existing shell policy and new Python regressions
+  docs/requirements/             # Stable REQ-* requirements
+  docs/architecture/             # Architecture overview, components, ADRs
+  action-plans/                  # Execution plans and completed-plan archive
+  README.md
+  ARCHITECTURE.md
+  CLAUDE.md
+  LICENSE
 ```
 
 ## License
 
-MIT License -- see [LICENSE](LICENSE).
+MIT License -- see [LICENSE](LICENSE). Upstream plugins retain their own licenses;
+the catalog license does not relicense their content.
 
 ## Author
 
