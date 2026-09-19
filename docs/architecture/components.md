@@ -30,12 +30,17 @@ The hub has fewer components than a typical plugin repo because it is metadata-o
 
 ## 2. plugin entries -- one per installable plugin
 
-Each entry in `plugins[]` is a logical component. The initial catalog (REQ-PLUGIN-ENTRY-005) contains, in the same alphabetical order used by the manifest:
+Each entry in `plugins[]` is a logical component. The current catalog extends the initial required entries (REQ-PLUGIN-ENTRY-005), in the same alphabetical order used by the manifest:
 
 - **`claude-code-guardian`**
   - `source`: `https://github.com/idnotbe/claude-code-guardian.git`
   - Upstream owns its own `plugin.json`, hooks, and scripts.
   - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
+
+- **`deep-inquiry`**
+  - `source`: `https://github.com/idnotbe/deep-inquiry.git`
+  - Upstream owns the canonical `.agents/skills/deep-inquiry/` bundle and matching `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` compatibility manifests. Both reference `./.agents/skills/`; no skill copy is kept in either hub.
+  - Hub-side responsibility: metadata only. Standalone installation also works with the skills CLI for Codex and Claude Code. The runtime remains instruction-only; installation checks do not prove reasoning quality.
 
 - **`deepscan`**
   - `source`: `https://github.com/idnotbe/deepscan.git`
@@ -52,9 +57,14 @@ Each entry in `plugins[]` is a logical component. The initial catalog (REQ-PLUGI
   - Upstream owns its own `plugin.json` (with `skills` field declared at the manifest level), `.claude/skills/prd-creator/`, and supporting docs. The upstream `skills` field is permitted by the marketplace.json schema and does NOT trigger CHECK-13, which scopes only to entries inside the hub's `marketplace.json`.
   - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
+- **`skill-quality-builder`**
+  - `source`: `https://github.com/idnotbe/skill-quality-builder.git`
+  - Upstream owns `.agents/skills/skill-quality-builder/`, including its portable optional Python helpers, and the same two compatibility manifests used by deep-inquiry and vibe-check. Existing evaluation cases and observations remain upstream, not catalog metadata.
+  - Hub-side responsibility: metadata only. Packaging and successful installation do not establish generated-skill quality or model effectiveness.
+
 - **`vibe-check`**
   - `source`: `https://github.com/idnotbe/vibe-check.git`
-  - Upstream owns `plugin.json`, `SKILL.md`, and `validate_skill.sh`.
+  - Upstream owns `.agents/skills/vibe-check/` and matching `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` compatibility manifests. The skill is instruction-only; repository distribution checks are maintenance tools, not installed runtime hooks.
   - Hub-side responsibility: `name` + `description` + `source` URL + `category` + `tags` + `homepage` (metadata-only per REQ-HYGIENE-002). No upstream `version` is mirrored -- bare-URL tracking by git SHA is intentional (ADR-002).
 
 Future plugins are added by inserting a new entry at the position dictated by alphabetical order on `name` (case-insensitive). The list is sorted, not append-only -- this keeps merge conflicts deterministic and removes any implied ranking. Deprecation follows REQ-PLUGIN-ENTRY-006: prefix the description with `[DEPRECATED]` and keep the entry for at least one revision before removal.
@@ -65,17 +75,17 @@ Future plugins are added by inserting a new entry at the position dictated by al
 
 The hub does not implement source resolution. Claude Code's plugin loader handles it. Documenting the resolver's behavior here is informational, so that hub maintainers know which `source` shapes the schema admits.
 
-The current marketplace.json schema permits **five** plugin source forms:
+The marketplace source forms below record the existing hub design; consult the installed host's current schema before adopting a new source form:
 
 | # | Source form | Shape | Behavior |
 |---|-------------|-------|----------|
-| 1 | Relative path | `"./plugins/foo"` (string, not object) | Resolves relative to the `marketplace.json` directory. Used by monorepo layouts (Anthropic's `claude-plugins-official`). |
+| 1 | Relative path | `"./plugins/foo"` (string, not object) | Resolves within the marketplace checkout. Used by monorepo layouts. |
 | 2 | GitHub shorthand | `{ "source": "github", "repo": "owner/name", "ref": "...", "sha": "..." }` | Equivalent to the URL form for `https://github.com/owner/name.git`. `ref` and `sha` are optional pins. |
 | 3 | URL (whole repo) | `{ "source": "url", "url": "...", "ref": "...", "sha": "..." }` | Clones the URL, checks out the default branch (or the optional `ref`/`sha`), loads `.claude-plugin/plugin.json` at the repo root. |
 | 4 | Git subdir | `{ "source": "git-subdir", "url": "...", "path": "...", "ref": "...", "sha": "..." }` | Clones the repo, checks out at `ref`/`sha`, then loads `plugin.json` from `path/`. |
-| 5 | npm | `{ "source": "npm", "package": "..." }` | Resolves through the npm registry. |
+| 5 | npm | `{ "source": "npm", "package": "..." }` | Resolves through the npm registry where supported by the host. |
 
-**Hub policy (v1)**: This hub uses form #3 (`url`) **bare** -- no `ref`, no `sha` -- for every entry: `{ "source": "url", "url": "https://github.com/idnotbe/<repo>.git" }`. Any pinning (sha or ref) is deferred (ADR-002). Forms #1, #2, #4, #5 are documented above so future hub maintainers know what the schema admits, but this hub does not use them in v1.
+**Hub policy (v1)**: This hub uses form #3 (`url`) **bare** -- no `ref`, no `sha` -- for every entry: `{ "source": "url", "url": "https://github.com/idnotbe/<repo>.git" }`. Any pinning (sha or ref) is deferred (ADR-002). Forms #1, #2, #4, #5 are documented above so future hub maintainers know the historical design, but this hub does not use them in v1.
 
 ---
 
@@ -83,10 +93,11 @@ The current marketplace.json schema permits **five** plugin source forms:
 
 The user's local Claude Code stores added marketplaces in `~/.claude/plugins/known_marketplaces.json`, keyed by marketplace `name`. Two marketplaces with the same `name` collide.
 
-| Source                                                | Marketplace `name`     | Collides with hub?                |
-|-------------------------------------------------------|------------------------|-----------------------------------|
-| `idnotbe/claude-plugins` (this hub)                   | `"idnotbe"`            | --                                |
-| Hypothetical other marketplace using `name: "idnotbe"`| `"idnotbe"`            | YES -- forbidden by REQ-COLLISION-001 |
+| Source | Marketplace `name` | Collides with hub? |
+|---|---|---|
+| `idnotbe/claude-plugins` (this hub) | `"idnotbe"` | -- |
+| `idnotbe/chatgpt-plugins` (OpenAI catalog) | `"idnotbe-chatgpt-plugins"` | No; separate host catalog and distinct identity |
+| Hypothetical other marketplace using `name: "idnotbe"` | `"idnotbe"` | YES -- forbidden by REQ-COLLISION-001 |
 
 Per ADR-007, no `idnotbe`-owned upstream plugin repository ships a `.claude-plugin/marketplace.json`. The two upstreams that previously did (`idnotbe/vibe-check` with `name: "vibe-check"` and `idnotbe/claude-code-guardian` with `name: "idnotbe-security"`) had their standalone manifests removed in plan 0006 (see ADR-007). Future `idnotbe`-owned `marketplace.json` files MUST NOT use `name: "idnotbe"` (REQ-COLLISION-002, forward-only).
 
@@ -94,21 +105,21 @@ The "no other marketplace under `idnotbe`" rule is a process commitment enforced
 
 ---
 
-## 6. Validation -- two layers (built-in baseline + hub-specific layer)
+## 6. Validation -- baseline, hub policy and installation evaluation
 
-Validation happens in two layers. The built-in is the floor; the hub-specific script only adds checks the built-in does not perform.
+The two existing validation layers remain required. Native-host installation checks complement them without weakening their policy or schema gates.
 
 ### 6a. Built-in baseline: `claude plugin validate .`
 
 - **What it is**: A first-party command shipped with Claude Code (also exposed as the slash command `/plugin validate .`). It validates `.claude-plugin/marketplace.json` against the marketplace schema.
 - **What it covers**: JSON well-formedness, schema conformance (every field has the right type/shape), required-field presence per the schema, `source` form validity for each entry.
 - **Why it is the baseline**: It tracks the schema that Claude Code actually loads against. Anything that breaks here will also break for users on install.
-- **How the hub uses it**: It is the first check. Maintainers MUST run it before merging any change to `marketplace.json`. The hub's CI (planned, not present in v1) will run it in front of the hub-specific layer.
+- **How the hub uses it**: Maintainers MUST run it before merging any change to `marketplace.json`. `.github/workflows/catalog.yml` runs the strict form through the explicit integration checker on native Windows and Linux.
 
 ### 6b. Hub-specific layer: `tests/validate_marketplace.sh`
 
 - **Purpose**: Layer hub-specific *policy* checks on top of the built-in's *schema* checks. The built-in cannot enforce that this hub's `name` is the literal string `"idnotbe"`, that every source URL points at `github.com/idnotbe/*.git`, or that no plugin entry inlines `commands`/`hooks`/`mcpServers` -- because the schema permits all of those things in general. The hub-specific layer is the only place those policies live.
-- **Status**: Implemented. Active hub-policy validator implementing CHECK-0..CHECK-13 (CHECK-9 is optional and gated behind `--with-network`). Modeled on `idnotbe/vibe-check`'s `validate_skill.sh` (POSIX shell, no Node).
+- **Status**: Implemented. Active hub-policy validator implementing CHECK-0..CHECK-13 (CHECK-9 is optional and gated behind `--with-network`). Its implementation is preserved by the cross-host rollout.
 - **Checks** (cited from `functional.md`):
   - CHECK-0: `marketplace.json` parses as JSON. (Cheap re-check; built-in also covers this.)
   - CHECK-1: marketplace `name` exactly equals the literal `"idnotbe"`. (Hub policy; built-in only checks the field is a string.)
@@ -125,6 +136,14 @@ Validation happens in two layers. The built-in is the floor; the hub-specific sc
   - CHECK-12: `$schema` is present and equals `"https://json.schemastore.org/claude-code-marketplace.json"` (REQ-MANIFEST-006).
   - CHECK-13: no plugin entry contains any of `commands`, `hooks`, `mcpServers`, `lspServers`, `agents`, `skills`, `setup`, `strict` (REQ-HYGIENE-002 hub policy; the schema allows them but the hub forbids inlining, including the install-time `setup` script field).
 - **Dependencies**: POSIX bash + `jq` only. CHECK-0 uses `jq -e .` for parse validation (rejects empty files and non-JSON content); no `python3` fallback ships in v1. If `jq` is missing, the validator exits 2 with a clear tooling-error message.
+
+### 6c. Native Windows/Linux catalog integration
+
+`tools/check_catalog.py` and `tests/test_catalog.py` are maintenance-only Python 3.10+ standard-library tools, shared with the OpenAI hub. Static checks reject unexpected URLs, pins, duplicate entries and inline components. Regression tests cover Codex plugin-qualified skill names and Git-object comparison independent of Windows checkout line endings.
+
+The explicit `--smoke` mode records source SHAs, installed-file hashes and CLI versions. It installs the three standardized skills from their actual GitHub URLs into both agent directories, compares their common distribution files by tracked Git blob identity, validates this hub with Claude's strict validator, and installs the three external Claude plugins. The existing shell policy validator also runs on Linux. Other catalog entries are not installed or modified.
+
+The OpenAI sibling uses the same checker to register its own catalog and perform development-only Codex plugin read/install checks in an isolated home. No model turn, LLM credential, MCP server or hook is requested. GUI installation, web/workspace import, natural triggering and model effectiveness remain separate checks recorded as `not_run`. A configured workflow is not a successful run; inspect the exact-revision CI results and JSON artifact.
 
 ---
 

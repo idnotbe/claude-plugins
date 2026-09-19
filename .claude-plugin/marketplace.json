@@ -19,6 +19,17 @@
       "homepage": "https://github.com/idnotbe/claude-code-guardian"
     },
     {
+      "name": "deep-inquiry",
+      "description": "Investigate problems beyond familiar answers while preserving the user objective.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/idnotbe/deep-inquiry.git"
+      },
+      "category": "agent-tools",
+      "tags": ["reasoning", "problem-solving", "agent-skills"],
+      "homepage": "https://github.com/idnotbe/deep-inquiry"
+    },
+    {
       "name": "deepscan",
       "description": "Deep multi-file analysis plugin for complex tasks where standard context windows fail. Orchestrates parallel sub-agents for security, architecture, and performance analysis.",
       "source": {
@@ -52,8 +63,19 @@
       "homepage": "https://github.com/idnotbe/prd-creator"
     },
     {
+      "name": "skill-quality-builder",
+      "description": "Create, improve, and audit reusable Agent Skills with explicit validation and evaluation.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/idnotbe/skill-quality-builder.git"
+      },
+      "category": "agent-tools",
+      "tags": ["agent-skills", "quality", "evaluation"],
+      "homepage": "https://github.com/idnotbe/skill-quality-builder"
+    },
+    {
       "name": "vibe-check",
-      "description": "Metacognitive sanity checks for agent plans. Use before irreversible actions, when uncertainty is high, or when complexity is escalating.",
+      "description": "Assess whether the next action should proceed, be adjusted, or stop.",
       "source": {
         "source": "url",
         "url": "https://github.com/idnotbe/vibe-check.git"
